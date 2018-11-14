@@ -1,0 +1,13 @@
+# Inferring Return Rate and Number of Surveys from Observed Returns
+model{
+  # Observed Returns
+  for (i in 1:m){
+     k[i] ~ dbin(theta,n)
+  }   
+  # Priors on Rate Theta and Number n
+  theta ~ dbeta(1,1)
+  n ~ dcat(p[])
+  for (i in 1:nmax){
+    p[i] <- 1/nmax
+  }
+}   

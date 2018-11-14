@@ -9,7 +9,6 @@ from os import path
 import re
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 from scipy import stats
 import numpy as np
 
@@ -72,14 +71,10 @@ class model_handler:
 		self.sample = []
 		section = ''
 		for line in spec.split('\n'):
-			if "#" in line:
-				line = line.split("#")[0]
-				
 			if ':' in line:
 				section = line
 
 			elif len(line) > 0:
-				
 
 
 				if 'model' in section:
@@ -89,25 +84,13 @@ class model_handler:
 					assignment = line.replace(" ","").split('=')
 					self.__dict__[assignment[0]] = assignment[1]
 				elif section == 'data:':
-					# I'm bending over backwards to write python in a string and then
-					# process it. That's got to be insane, right? It's got
-					# to be full of holes.
+					# do we EVER pass non-numeric data to models?
 					assignment = line.replace(" ","").split('=')
-					expression = assignment[1]
-					variables = assignment[0].split(',')
-					#this is getting goofy, but we're replacing all the
-					#instances with a varibale in the settings string
-					#with a reference to our handler's data dict for that variable
-					for key in self.data.keys():
-						expression = re.sub(fr'(\s{key}$|^{key}(?:\s|$)|\s{key}\s|\({key}\)|\[{key}\])',lambda match : (match.group(0).replace(str(key),f'self.data["{key}"]')), expression)
-
-					if len(variables) > 1:
-						for index, variable in enumerate(variables):
-							self.data[variable] = eval(expression)[index]
-					
+					if assignment[1].startswith('['):
+						#should this be more clever about deciding to int or float the values?
+						self.data[assignment[0]] = np.array([float(i) for i in assignment[1].strip("[]").split(',')])
 					else:
-						self.data[variables[0]] = eval(expression)
-
+						self.data[assignment[0]] = assignment[1]
 				elif section == 'sample:':
 					self.sample.append(line)
 				
@@ -144,22 +127,10 @@ class sample_handler:
 	Handle common display functions for data in BCM exercises.
 	"""
 	def __init__(self, samples) -> None:
-		#data = {k: v.squeeze(0) for k, v in samples.items()}
-
-		### test new data cruncher: handles iterated subvariables in the else case
-		data = {}
-		for k, v in samples.items():
-			if np.shape(samples[k])[0] == 1:
-				data[k] = v.squeeze(0)
-			else:
-				for i in range(np.shape(samples[k])[0]):
-					data[f"{k}_{str(i)}"] = v[i,:,:]
-
-		###end new data cruncher
-
-
+		data = {k: v.squeeze(0) for k, v in samples.items()}
 		nsamples = len(next(iter(data.values())))
-		self.parameters = [k for k in data.keys()]
+		myvars = [k for k in data.keys()]
+
 
 
 		nchains = len(next(iter(data.values()))[0])
@@ -171,7 +142,7 @@ class sample_handler:
 
 		self.samples = pd.DataFrame(
 			index=idx,
-			columns=[i for i in self.parameters]
+			columns=[i for i in myvars]
 		)
 
 		self.samples.rename_axis(["variable"], axis=1, copy=False, inplace=True) #name columns
@@ -209,8 +180,6 @@ class sample_handler:
 
 		# self.samples[[i for i in variables]].hist()
 
-	def vizjoint(self, variable1, variable2):
-		joint = sns.jointplot(variable1, variable2, data=self.samples, color="grey");
 
 	def vizhist(self, *variables, bins=50, range=(0,1)):
 		
@@ -250,39 +219,23 @@ class sample_handler:
 			max_density = x[np.argsort(nparam_density(x))[-1]]
 			print(f"maximum density observed across 1000 bins was at x = {max_density}")
 
-	def summary(self):
-		summarytable = pd.DataFrame(columns=['var','mean', 'std dev', 'median','mode','HPD','95CI'])
-		for parameter in self.parameters:
-			summarytable = summarytable.append(self.summarize_var(parameter), ignore_index=True)
-		summarytable.set_index('var', inplace=True)
-		del summarytable.index.name
-		return summarytable
 
-
-	def summarize_var(self, variable, ci="95"):
+	def summarize(self, variable, ci="95"):
 		#should be edited to support arbitrary joint reports?
-		details = {}
-		#pd.DataFrame(columns=['var','mean','median','mode','HPD','2.5%','97.5%'])
 		var = self.get(variable)
-		details['var'] = variable
-		#samples = len(var)
+		samples = len(var)
 
-		details['mean'] = np.mean(var)
-		details['median'] = np.median(var)
-		details['std dev'] = np.std(var)
+		mean = np.mean(var)
+		median = np.median(var)
 		
-		details['95CI'] = np.around(self.ci_percentile(var), decimals=3)
-
-		details['HPD'] = np.around(self.ci_hpd(var), decimals=3)
+		cip = self.ci_percentile(var)
+		cihpd = self.ci_hpd(var)
+		mode = self.mode(var)
 		
-		details['mode'] =  self.mode(var)
-		return details
-		
-		#return str(f'variable:{variable}\nmean:{mean}\nmedian:{median}\nmode:{mode}\n2.5th-97.5th %ile:{cip}\n95% HPD:{cihpd}')
+		return str(f'variable:{variable}\nmean:{mean}\nmedian:{median}\nmode:{mode}\n2.5th-97.5th %ile:{cip}\n95% HPD:{cihpd}')
 
 	def ci_percentile(self,variable, bounds=(2.5,97.5)):
 		return np.percentile(variable,bounds[0]),np.percentile(variable,bounds[1],interpolation='nearest')
-
 
 	def ci_hpd(self,var, bins=1000, interval=95):
 		
@@ -342,76 +295,14 @@ class sample_handler:
 		return maxbin
 			
 
-	def diagnostic(self):
-		rhats = {parameter : self.psrf(parameter) for parameter in self.parameters}
-		
-		maxhat = max(rhats, key = lambda val : rhats[val])
-		if rhats[maxhat] < 1.05:
-			print(f"all PSRF values < 1.05 | maximum PSRF: {maxhat} at {rhats[maxhat]}.")
 
 
-	def autocorr(self, variable, steps=10):
-		def lag(k, array):
-			#lag k autocorrelation
-			#as defined by https://www.itl.nist.gov/div898/handbook/eda/section3/eda35c.htm
 
-			#do this as a generator?
-			#in any case, revisit this to make sure it's not written in a foolish way.
-			#might be silly slow? see if pandas can make it smarter
-			
-			N = np.size(array)
-			valuesmean = np.mean(array)
-			valuearray = array
 
-			dividend = 0
-			for i in range(N-k):
-				dividend += (valuearray[i] - valuesmean) * (valuearray[i+k] - valuesmean)
 
-			divisor = 0
-			for i in range(N):
-				divisor += (valuearray[i] - valuesmean)**2
 
-			return dividend/divisor
 
-		array = self.samples.loc[[0],[variable]].values
 
-		lag_time = [lag(k, array) for k in range(1,steps+1)]
-
-		lags = pd.DataFrame(lag_time, columns=["autocorrelation"])
-		lags['lag'] = range(1,steps+1)
-
-		sns.barplot(x='lag', y='autocorrelation', data=lags);
-
-	def psrf(self, variable):
-		def gelrubin(myarray):
-			# this function will not properly support chains of different lengths.
-			#algorithm from http://astrostatistics.psu.edu/RLectures/diagnosticsMCMC.pdf
-			#and https://blog.stata.com/2016/05/26/gelman-rubin-convergence-diagnostic-using-multiple-chains/
-			#chains = ndarray of size nsamples*nchains
-			
-			#this is written very, very badly, and needs a rewrite.
-
-			chainmeans = np.mean(myarray, 0)
-			totalmean = np.mean(myarray)
-
-			nchains = np.shape(myarray)[1]#nchains
-			nsamples = np.shape(myarray)[0]
-
-			B = (nsamples/(nchains - 1))*sum([(chainmean - totalmean)**2 for chainmean in chainmeans])
-			
-			#W = (1/nchains)*sum(np.var(chains, 0))
-			W = np.mean(np.var(myarray, 0))
-
-			
-
-			varhat = (1 - (1/nsamples))*W + (1/nsamples)*B
-
-			rhat = np.sqrt(varhat/W)
-			
-			return rhat
-
-		array = self.samples.loc[:,[variable]].unstack(level=0).values
-		return gelrubin(array)
 
 
 

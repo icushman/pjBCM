@@ -1,0 +1,11 @@
+# Inferring a Common Rate, With Posterior Predictive
+model{  
+   # Observed Counts
+   k1 ~ dbin(theta,n1)
+   k2 ~ dbin(theta,n2)
+   # Prior on Single Rate Theta
+   theta ~ dbeta(1,1)
+   # Posterior Predictive
+   postpredk1 ~ dbin(theta,n1)
+   postpredk2 ~ dbin(theta,n2)   
+}

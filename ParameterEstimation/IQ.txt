@@ -1,0 +1,15 @@
+# Repeated Measures of IQ
+model{
+  # Data Come From Gaussians With Different Means But Common Precision
+  for (i in 1:n){
+    for (j in 1:m){
+      x[i,j] ~ dnorm(mu[i],lambda)
+    }
+  }
+  # Priors
+  sigma ~ dunif(0,100)
+  lambda <- 1/pow(sigma,2)     
+  for (i in 1:n){
+    mu[i] ~ dunif(0,300)
+  }
+}

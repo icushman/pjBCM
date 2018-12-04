@@ -1,0 +1,32 @@
+# ChaSaSoon Censored Data in JAGS 
+# Courtesy of Wouter Kruijne  
+data{
+  # 'hacky trick' to make the model correspond to the book's model; using dinterval below
+  # all data is 'censored', the one fully observed datapoint censored to [0,n] 
+  # (making it effectively uncensored)
+  for (i in 1:nattempts){
+    is.censored[i] <- 1
+  }
+  # one more for theta, 'censored' to  0.25-1
+  # a uniform prior would also work.
+  is.cnsrd <- 1
+}
+model{
+  for (i in 1:nattempts){
+    # If the Data Were Unobserved y[i]=1, Otherwise y[i]=0   
+    z.low[i]  <- 15 * equals(y[i],1) + 0 * equals(y[i], 0)
+    z.high[i] <- 25 * equals(y[i],1) + n * equals(y[i], 0)
+    lim[i,1] <- z.low[i]
+    lim[i,2] <- z.high[i]
+    #lim[i,] <- c(z.low[i],z.high[i])
+    is.censored[i] ~ dinterval(z[i], lim[i,])
+    #is.censored[i] ~ dinterval(z[i], c(z.low[i],z.high[i]) )
+    z[i] ~ dbin(theta,n)
+  }
+  # Uniform Prior on Rate Theta
+   x[1] <- 0.25
+   x[2] <- 1
+   is.cnsrd ~ dinterval(theta, x)
+   theta ~ dbeta(1,1)
+   # theta ~ dunif(0.25, 1)
+}

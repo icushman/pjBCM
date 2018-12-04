@@ -1,0 +1,15 @@
+# ChaSaSoon Censored Data in JAGS 
+#Isaiah's confused edit
+
+
+model{
+  for (i in 1:nattempts){
+    iscensored[i] <- y[i]
+    lopass[i] <- 15 - iscensored[i]*15
+    hipass[i] <- 60 - iscensored[i]*35
+    z[i] ~ dbin(myrate,nattempts)
+  }
+  
+  myrate ~ dunif(0,1)
+
+}

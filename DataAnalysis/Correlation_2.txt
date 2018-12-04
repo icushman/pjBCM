@@ -1,0 +1,24 @@
+# Pearson Correlation With Uncertainty in Measurement
+model{
+  # Data
+  for (i in 1:n){
+    y[i,1:2] ~ dmnorm(mu[],TI[,])
+    for (j in 1:2){
+      x[i,j] ~ dnorm(y[i,j],lambdaerror[j])
+    }
+  }
+  # Priors
+  mu[1] ~ dnorm(0,.001)
+  mu[2] ~ dnorm(0,.001)
+  lambda[1] ~ dgamma(.001,.001)
+  lambda[2] ~ dgamma(.001,.001)
+  r ~ dunif(-1,1)
+  # Reparameterization
+  sigma[1] <- 1/sqrt(lambda[1])
+  sigma[2] <- 1/sqrt(lambda[2])
+  T[1,1] <- 1/lambda[1]
+  T[1,2] <- r*sigma[1]*sigma[2]
+  T[2,1] <- r*sigma[1]*sigma[2]
+  T[2,2] <- 1/lambda[2]
+  TI[1:2,1:2] <- inverse(T[1:2,1:2])
+}

@@ -1,0 +1,19 @@
+# Planes
+data{
+  zeros <- 0
+}
+model{
+  # Hypergeometric Likelihood Via Zeros Trick
+  logterm1 <- logfact(x+.01)-logfact(k+.01)-logfact(x-k+.01)
+  logterm2 <- logfact(t-x+.01)-logfact(n-k+.01)-logfact((t-x)-(n-k)+.01)
+  logterm3 <- logfact(t+.01)-logfact(n+.01)-logfact(t-n+.01)
+  C <- 1000
+  phi <- -(logterm1+logterm2-logterm3)+C 
+  zeros ~ dpois(phi)
+  # Prior on Population Size
+  for (i in 1:tmax){
+    tptmp[i] <- step(i-(x+n-k))
+    tp[i] <- tptmp[i]/sum(tptmp[1:tmax])
+  }
+  t ~ dcat(tp[])
+}

@@ -1,0 +1,17 @@
+# ChaSaSoon Censored Data
+data{
+  for (i in 1:nattempts){
+    ones[i] <- 1
+  }
+}
+model{
+  for (i in 1:nattempts){
+    # If the Data Were Unobserved y[i]=1, Otherwise y[i]=0   
+    c[i,1] <- 14*equals(y[i],1)+0*equals(y[i],0)
+    c[i,2] <- 25*equals(y[i],1)+n*equals(y[i],0)
+	ones[i] ~ dinterval(z[i],c[i,1:2])
+    z[i] ~ dbin(theta,n)
+  }
+  # Uniform Prior on Rate Theta
+  theta ~ dbeta(1,1)I(.25,1)
+}

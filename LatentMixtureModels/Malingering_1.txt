@@ -1,0 +1,17 @@
+# Malingering
+model{
+  # Each Person Belongs to One of Two Latent Groups
+  for (i in 1:p){
+    z[i] ~ dbern(0.5)
+    z1[i] <- z[i]+1
+  }
+  # Bona Fide Group has Unknown Success Rate Above Chance
+  psi[1] ~ dunif(0.5,1)
+  # Malingering Group has Unknown Success Rate Below Bona Fide
+  psi[2] ~ dunif(0,psi[1])
+  # Data are Binomial with Group Rate for Each Person
+  for (i in 1:p){
+    theta[i] <- psi[z1[i]]
+    k[i] ~ dbin(theta[i],n)
+  }
+}

@@ -1,0 +1,36 @@
+# Cheating Latent-Mixture Model
+model{
+  # Each Person Belongs to One of Two Latent Groups
+  for (i in 1:p){
+     z[i] ~ dbern(phi) # phi is the Base Rate
+     z1[i] <- z[i]+1
+  }
+  # Relatively Uninformative Prior on Base Rate
+  phi ~ dbeta(5,5) 
+  # Data are Binomial with Rate Given by 
+  # Each Person's Group Assignment
+  for (i in 1:p){
+    k[i] ~ dbin(theta[i,z1[i]],n)
+    thetatmp[i,1] ~ dbeta(alpha[1],beta[1])
+    theta[i,1] <- max(.01,min(.99,thetatmp[i,1]))
+    thetatmp[i,2] ~ dbeta(alpha[2],beta[2])
+    theta[i,2] <- max(.01,min(.99,thetatmp[i,2]))
+  }
+  # Transformation to Group Mean and Precision
+  alpha[1] <- mubon * lambdabon
+  beta[1] <- lambdabon * (1-mubon)
+  # Additivity on Logit Scale
+  logit(muche) <- logit(mubon) + mudiff # Note the "+"
+  alpha[2] <- muche * lambdache
+  beta[2] <- lambdache * (1-muche)
+  # Priors
+  mubon ~ dbeta(1,1)
+  mudiff ~ dnorm(0,0.5)I(0,) # Constrained to be Positive
+  lambdabon ~ dunif(5,40)
+  lambdache ~ dunif(5,40)
+  # Correct Count
+  for (i in 1:p){
+    pct[i] <- equals(z[i],truth[i])
+  }
+  pc <- sum(pct[1:p])
+}

@@ -128,6 +128,21 @@ class sample_handler:
 					#number each sub-parameter and give it
 					#its own entry in our data dictionary
 
+				#what follows handles nested variables >= 3 dimensions
+				#this is very hacky -- should ideally be handled by the same
+				#code as all other cases.
+				newkeys = {}
+				while any(len(np.shape(data[key])) > 2 for key in data):
+					killkeys = set()
+					for key in data:
+						if len(np.shape(data[key])) > 2:
+							killkeys.add(key)
+							for i in range(np.shape(data[key])[0]):
+								newkeys[f"{key}_{str(i)}"] = data[key][i,:,:]
+					data = {**data, **newkeys}
+					for key in killkeys:
+						del(data[key])
+
 		#extract nsamples, nchains, and tracked parameter names from data.
 		nsamples = len(next(iter(data.values())))
 		nchains = len(next(iter(data.values()))[0])
@@ -145,6 +160,7 @@ class sample_handler:
 		)
 		self.samples.rename_axis(["variable"], axis=1, copy=False, inplace=True) #name columns
 
+		self.data_debug = data
 		try:
 			#load values from data dict into self.samples DataFrame
 			for key in data:
@@ -152,6 +168,7 @@ class sample_handler:
 					self.samples[key][chain] = data[key][:,chain]
 		except IndexError:
 			assert False, (f'Debugging note: error likely relates to unpacking nested vars')
+			
 
 		self.samples = self.samples.astype(float)
 
@@ -332,6 +349,8 @@ class sample_handler:
 		maxhat = max(rhats, key = lambda val : rhats[val])
 		if rhats[maxhat] < 1.05:
 			print(f"all PSRF values < 1.05 | maximum PSRF: {maxhat} at {rhats[maxhat]}.")
+		else:
+			print(f"Evidence of poor mixing.  Not all PSRF values not under 1.05 \n maximum PSRF: {maxhat} at {rhats[maxhat]}.")
 
 	def showparameters(self):
 		"""Print all tracked parameters in sample data"""

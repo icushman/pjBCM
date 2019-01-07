@@ -8,11 +8,10 @@ PyJAGS is a Python module designed to provide an interface to the JAGS
 Gibbs sampling application. This class contains methods for processing
 a simple string that specifies a model into a format PyJAGS will accept.
 
-For usage, print attributes `specification_template` and `model_template`.
+For usage, print attribute `specification_template`.
 
 Attributes:
  specification_template: a demonstration of how to specify model properties
- model_template: a demonstration of how to define a JAGS model.
  model: a string representing the JAGS model to be passed to PyJAGS
 
 ## load_model
@@ -60,9 +59,9 @@ Returns:
  to the arguments specified in the model handler. This dict can be
  passed directly to the model using **kwargs syntax.
 
-## setdata
+## set_data
 ```python
-ModelHandler.setdata(self, varname: str, value) -> None
+ModelHandler.set_data(self, varname: str, value) -> None
 ```
 Set model's data from outside the specification string.
 
@@ -184,7 +183,7 @@ Arguments:
 Returns:
  dict -- A map of summary statistics to their calculated values.
 
-## getstatistic
+## get_statistic
 ```python
 SampleHandler.getstatistic(self, variable, statistic)
 ```

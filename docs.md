@@ -11,7 +11,8 @@ a simple string that specifies a model into a format PyJAGS will accept.
 For usage, print attribute `specification_template`.
 
 Attributes:
- specification_template: a demonstration of how to specify model properties 
+ specification_template: a demonstration of how to specify model properties
+ 
  model: a string representing the JAGS model to be passed to PyJAGS
 
 ## load_model

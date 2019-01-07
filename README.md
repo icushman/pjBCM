@@ -1,6 +1,6 @@
 # Bayesian Cognitive Modeling with `pyjgags`
 
-This is a project to port the code examples from Lee and Wagenmakers' 2013 textbook [Bayesian Cognitive Modeling: A Practical Course](https://bayesmodels.com/) from MATLAB into Python, using the [pyjags](https://github.com/tmiasko/pyjags) package for interfacing Python code with the JAGS Gibbs sampler.
+This is a project to port the code examples in Lee and Wagenmakers' 2013 textbook [Bayesian Cognitive Modeling: A Practical Course](https://bayesmodels.com/) from MATLAB into Python, using the [pyjags](https://github.com/tmiasko/pyjags) package for interfacing Python code with the `JAGS` Gibbs sampling application.
 
 The main contribution is the module `pjbcmassistant`, which contains convenience classes `ModelHandler` and `SampleHandler` for easily interfacing with `pyjags`, and for performing basic analysis on the model samples it produces.
 

@@ -1,0 +1,20 @@
+# Change Detection
+model{
+  # Data Come From A Gaussian
+  for (i in 1:n){
+    c[i] ~ dnorm(mu[z1[i]],lambda)
+  }
+  # Group Means
+  mu[1] ~ dnorm(0,.001)
+  mu[2] ~ dnorm(0,.001)
+  # Common Precision
+  lambda  ~ dgamma(.001,.001)
+  sigma  <- 1/sqrt(lambda)
+  # Which Side is Time of Change Point?
+  for (i in 1:n){
+    z[i]  <- step(t[i]-tau)
+    z1[i] <- z[i]+1
+  }
+  # Prior On Change Point
+  tau ~ dunif(0,n)     
+}

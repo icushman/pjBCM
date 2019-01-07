@@ -1,0 +1,12 @@
+# Prior and Posterior Prediction
+model{
+   # Observed Data
+   k ~ dbin(theta,n)
+   # Prior on Rate Theta
+   theta ~ dbeta(1,1)
+   # Posterior Predictive
+   postpredk ~ dbin(theta,n)
+   # Prior Predictive
+   thetaprior ~ dbeta(1,1)
+   priorpredk ~ dbin(thetaprior,n)
+}

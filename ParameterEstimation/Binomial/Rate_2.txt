@@ -1,0 +1,11 @@
+# Difference Between Two Rates
+model{
+   # Observed Counts
+   k1 ~ dbin(theta1,n1)
+   k2 ~ dbin(theta2,n2)
+   # Prior on Rates
+   theta1 ~ dbeta(1,1)
+   theta2 ~ dbeta(1,1)
+   # Difference Between Rates
+   delta <- theta1-theta2
+}

@@ -1,0 +1,24 @@
+# Kappa Coefficient of Agreement
+model{
+  # Underlying Rates
+  # Rate Objective Method Decides "one"
+  alpha ~ dbeta(1,1) 
+  # Rate Surrogate Method Decides "one" When Objective Method Decides "one"
+  beta ~ dbeta(1,1)  
+  # Rate Surrogate Method Decides "zero" When Objective Method Decides "zero"
+  gamma ~ dbeta(1,1)        
+  # Probabilities For Each Count
+  pi[1] <- alpha*beta
+  pi[2] <- alpha*(1-beta)
+  pi[3] <- (1-alpha)*(1-gamma)
+  pi[4] <- (1-alpha)*gamma
+  # Count Data   
+  y[1:4] ~ dmulti(pi[],n)
+  # Derived Measures   
+  # Rate Surrogate Method Agrees With the Objective Method
+  xi <- alpha*beta+(1-alpha)*gamma 
+  # Rate of Chance Agreement
+  psi <- (pi[1]+pi[2])*(pi[1]+pi[3])+(pi[2]+pi[4])*(pi[3]+pi[4])
+  # Chance-Corrected Agreement
+  kappa <- (xi-psi)/(1-psi)
+}

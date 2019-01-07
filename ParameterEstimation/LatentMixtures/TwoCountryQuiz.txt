@@ -1,0 +1,30 @@
+# The Two Country Quiz
+model{
+  # Probability of Answering Correctly
+  alpha ~ dunif(0,1)    # Match
+  beta ~ dunif(0,alpha) # Mismatch   
+  # Group Membership For People and Questions
+  for (i in 1:nx){
+    x[i] ~ dbern(0.5)
+    x1[i] <- x[i]+1
+  }
+  for (j in 1:nz){
+    z[j] ~ dbern(0.5)
+    z1[j] <- z[j]+1
+  }   
+  # Probability Correct For Each Person-Question Combination By Groups
+  for (i in 1:nx){
+    for (j in 1:nz){
+      theta[i,j,1,1] <- alpha
+      theta[i,j,1,2] <- beta
+      theta[i,j,2,1] <- beta
+      theta[i,j,2,2] <- alpha
+    }
+  }   
+  # Data Are Bernoulli By Rate
+  for (i in 1:nx){
+    for (j in 1:nz){
+      k[i,j] ~ dbern(theta[i,j,x1[i],z1[j]])
+    }
+  }   
+}

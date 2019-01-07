@@ -1,0 +1,13 @@
+# The Seven Scientists
+model{
+  # Data Come From Gaussians With Common Mean But Different Precisions
+  for (i in 1:n){
+    x[i] ~ dnorm(mu,lambda[i])
+  }
+  # Priors
+  mu ~ dnorm(0,.001)
+  for (i in 1:n){
+    sigma[i] ~ dunif(0,10)
+    lambda[i] <- 1/pow(sigma[i],2) 
+  }     
+}

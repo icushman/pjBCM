@@ -1,0 +1,25 @@
+# Exam Scores With Individual Differences
+model{
+  # Data Follow Binomial With Rate Given By Each Person's Group Assignment
+  for (i in 1:p){
+    theta[i] <- equals(z[i],0)*psi+equals(z[i],1)*phi[i]
+    k[i] ~ dbin(theta[i],n)
+  }
+  # Each Person Belongs To One Of Two Latent Groups
+  for (i in 1:p){
+    z[i] ~ dbern(0.5)
+  }
+  # The Second Group Allows Individual Differences
+  for (i in 1:p){
+    # Second Group Drawn From A Censored Gaussian Distribution
+    phi[i] ~ dnorm(mu,lambda)T(0,1)
+  }   
+  # First Group Guesses
+  psi <- 0.5
+  # Second Group Mean, Precision (And Standard Deviation)
+  mu ~ dbeta(1,1)T(.5,1) # >0.5 Average Success Rate
+  lambda ~ dgamma(.001,.001)
+  sigma <- 1/sqrt(lambda) 
+  # Posterior Predictive For Second Group
+  predphi ~ dnorm(mu,lambda)T(0,1)
+}

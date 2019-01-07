@@ -1,0 +1,8 @@
+# Sample Model
+model{
+  for (i in 1:observationCount){ 
+    testScores[i] ~ dnorm(mu, lambda)
+  }
+  mu ~ dunif(0,10)
+  lambda ~ dgamma(.001,.001)
+}

@@ -1,0 +1,7 @@
+# Inferring a Rate
+model{
+   # Prior Distribution for Rate Theta
+   theta ~ dbeta(1,1)
+   # Observed Counts
+   k ~ dbin(theta,n)
+}

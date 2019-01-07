@@ -1,6 +1,0 @@
-list(
-theta = 0.1
-)
-list(
-theta = 0.9
-)

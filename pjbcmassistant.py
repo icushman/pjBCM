@@ -196,9 +196,59 @@ lambda
 			varname {str} -- the model variable name you wish to assign
 			value {int or list} -- the value to you wish a model variable to take
 		"""
-
 		self.data[varname] = value
 
+	def init_chain(self, varname:str, init_values:list) -> None:
+		"""Set the initial values of selected chain using values or a distribution.
+		
+		Arguments:
+			varname {str} -- The name of a model variable whose initial value you wish\
+			to fix.
+			init_values {list, int, or string} -- If init_values is a list, each item\
+in the list will be assigned to a chain. If single value, each chain will be initialized\
+with that value. If string, value must indicate a distribution from numpy.random that produces\
+a dingle number, e.g., `'uniform(0,5)'` or `'gamma(1,1)'`.
+		
+		Raises:
+			self.Error -- Unacceptable values of `init_values` argument raise exceptions.
+		"""
+		#Note: It would be cool to know all of the model variables at this stage
+		#but that would require some obscene parsing, a rework of the logic flow,
+		#or a 'trial run' model initialization...
+
+		self.chains = int(self.chains)
+
+		if type(init_values) not in (np.ndarray, list, str, float, int):
+			raise self.Error(f"ModelHandler.init_chain: expected initial values as list, \
+int, float, or string representing numpy distribution. See help for usage.")
+
+		if (type(init_values) in (np.ndarray, list) and
+				len(init_values) != self.chains):
+					raise self.Error(f"ModelHandler.init_chain: expected {self.chains} values\
+(one per chain), but only received {len(init_values)}. If you wish to have all chains\
+use same initial value, pass it as int, float, or distribution, rather than as a list.")
+
+
+		if type(init_values) == str:
+			source_distribution = lambda : eval('np.random.'+init_values)
+			try:
+				if type(source_distribution()) not in (float, int):
+					raise self.Error(f"ModelHandler.init_chain: string input for init_values \
+did not specify appropriate numpy.random distribution.")
+			except:
+				raise self.Error(f"ModelHandler.init_chain: Invalid string input for init_values. \
+Argument must be string specifying an appropriate numpy.random distribution, e.g., 'uniform(0,1)'.")
+			init_values = [source_distribution() for i in range(self.chains)]
+
+		elif type(init_values) in (int, float):
+			init_values = [init_values for i in range(self.chains)]
+
+		if not self.init:
+			self.init = [{varname:init_value} for init_value in init_values]
+
+		else:
+			new_init_list = [{varname:init_value} for init_value in init_values]
+			self.init = [{**new_init_list[i], **self.init[i]} for i in range(len(self.init))]
 
 
 	class Error(Exception):
